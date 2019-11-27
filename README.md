@@ -38,3 +38,12 @@ Anonymized [model input](https://github.com/hyrise/replication/blob/master/real_
 * query costs c_j, j=1,...4461
 * query frequencies f_j, j=1,...4461
 * accessed fragments per query q_j, j=1,...4461
+
+# Index Selection
+
+## TPC-DS
+
+[Model input](https://github.com/hyrise/replication/blob/master/index_selection/tpcds_3.txt) for index selection:
+* 8343 index candidates i with one, two, or three attributes
+* query costs c_j(i) (third column) for query j (first column) and index i (second column) if index lowers the costs (i=0 specifies query costs without applying indexes)
+* index sizes m_i, i=0,...,8343
