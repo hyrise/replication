@@ -39,6 +39,16 @@ Anonymized [model input](https://github.com/hyrise/replication/blob/master/real_
 * query frequencies f_j, j=1,...4461
 * accessed fragments per query q_j, j=1,...4461
 
+# Dynamic Query-Based Load-Balancing
+
+A terminal application using curses to visualize the load-balancing in database clusters on a query level.
+Logged query queue events are stored in the sqlite3 database file `example17.db` and in csv-format `results_1571561461.csv`.
+
+Run `python visualize_load_balancing.py` for an example. The visualisation requires some space (see screenshot below). Please, ensure that you terminal width is at least 170 and height about 50.
+
+![Screenshot of the curses application](https://github.com/hyrise/replication/blob/master/screenshot.png)
+
+
 # Index Selection
 
 ## TPC-DS
