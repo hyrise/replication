@@ -17,6 +17,8 @@ In case there is a single column index on an attribute, i.e., the attribute is p
 
 ### Query Costs
 We modeled query costs as average processing time for a query in PostgreSQL with random template parameters.
+Query costs depend, for example, on the hardware and PostgreSQL version.
+Hence, there may be multiple versions for the same workload in the repository.
 
 ## TPC-H
 [TPC-H fragment sizes](https://github.com/hyrise/replication/blob/master/tpch/tpch_colum_sizes_postgres_single_index.py)
@@ -31,6 +33,12 @@ The TPC-H benchmark consists of 22 queries.
 The TPC-DS benchmark consists of 99 queries.
 80 of 99 TPC-DS queries could be executed.
 [TPC-DS execution costs](https://github.com/hyrise/replication/blob/master/tpcds/tpcds_load_postgres_index_single.txt) (A '0' indicates a timeout, i.e., the omission of the query).
+
+## TPC-DS for EDBT
+[TPC-DS model input](https://github.com/hyrise/replication/blob/master/tpcds_edbt/tpcds_20200811_ampl_input.txt)
+
+The TPC-DS benchmark consists of 99 queries.
+94 of 99 TPC-H queries could be executed without a timeout (120 s).
 
 ## Real-World Workload
 Anonymized [model input](https://github.com/hyrise/replication/blob/master/real_world_workload/real_world_workload.txt) of a real-world workload, consisting of 4461 queries accessing subsets of 344 fragments:
