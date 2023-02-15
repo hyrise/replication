@@ -7,6 +7,7 @@ from setup_benchmark import get_replica_configurations, hungarian_configuration
 
 
 def changing_workload_tpch():
+    print('Table 2')
     benchmark = TPCH()
     load_file = 'tpch/costs_edbt24.txt'
     benchmark.add_load(load_file)
@@ -24,6 +25,15 @@ def changing_workload_tpch():
     workload_new_load_file = 'tpch/costs_edbt24_high.txt'
     workload_new.add_load(workload_new_load_file)
     set_column_sizes(workload_new._tables, workload_new_load_file)
+
+    greedy_memory = []
+    greedy_reallocation = []
+
+    optimal_basic_memory = []
+    optimal_basic_reallocation = []
+
+    optimal_reallocation_memory = []
+    optimal_reallocation_reallocation = []
 
     for number_of_nodes in range(2, 17):
         allocation_old = get_replica_configurations(workload_old, number_of_nodes, workload_old_load_file, 'optimal')
@@ -101,6 +111,27 @@ def changing_workload_tpch():
               f'\green{{{reallocation_ratio_realloc_greedy:7.1f}\%}}', '&\t',
               f'{time_reallocation:7.1f} s',
               '\\\\')
+
+        # Add data to plot
+        greedy_memory.append((number_of_nodes, new_size_greedy))
+        greedy_reallocation.append((number_of_nodes, no_dealloc_greedy_size - old_size))
+
+        optimal_basic_memory.append((number_of_nodes, new_size_optimal))
+        optimal_basic_reallocation.append((number_of_nodes, no_dealloc_optimal_size - old_size))
+
+        optimal_reallocation_memory.append((number_of_nodes, min_realloc_size))
+        optimal_reallocation_reallocation.append((number_of_nodes, no_dealloc_realloc_size - old_size))
+    print('(a) TPC-H\n')
+
+    print('Figure 2 (a): plotted TPC-H data')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal basic'] =", optimal_basic_memory)
+    print("memory['optimal reallocation'] =", optimal_reallocation_memory)
+    print()
+    print("reallocation['greedy'] =", greedy_reallocation)
+    print("reallocation['optimal basic'] =", optimal_basic_reallocation)
+    print("reallocation['optimal reallocation'] =", optimal_reallocation_reallocation)
+    print()
 
 
 def changing_workload_tpcds():
@@ -304,6 +335,21 @@ def changing_workload_tpcds():
                   f'\\textsubscript{{T}}\green{{{reallocation_ratio_realloc_time_limit_greedy:7.1f}\%}}', '&\t',
                   f'\\textsubscript{{T}}{time_reallocation_time_limit:7.1f} s',
                   '\\\\')
+    print('(b) TPC-DS\n')
+
+    print('Figure 2 (b): plotted TPC-DS data')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal basic'] =", optimal_basic_memory)
+    print("memory['ILP heuristic basic'] =", ILP_heuristic_basic_memory)
+    print("memory['optimal reallocation'] =", optimal_reallocation_memory)
+    print("memory['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_memory)
+    print()
+    print("reallocation['greedy'] =", greedy_reallocation)
+    print("reallocation['optimal basic'] =", optimal_basic_reallocation)
+    print("reallocation['ILP heuristic basic'] =", ILP_heuristic_basic_reallocation)
+    print("reallocation['optimal reallocation'] =", optimal_reallocation_reallocation)
+    print("reallocation['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_reallocation)
+    print()
 
 
 def changing_workload_accounting():
@@ -509,9 +555,25 @@ def changing_workload_accounting():
                   f'\\textsubscript{{CT}}\green{{{reallocation_ratio_realloc_clustering_greedy:7.1f}\%}}', '&\t',
                   f'\\textsubscript{{CT}}{time_reallocation_clustering:7.1f} s',
                   '\\\\')
+    print('(c) Accounting workload\n')
+
+    print('Figure 2 (c): plotted data for the accounting workload')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal basic'] =", optimal_basic_memory)
+    print("memory['ILP heuristic basic'] =", ILP_heuristic_basic_memory)
+    print("memory['optimal reallocation'] =", optimal_reallocation_memory)
+    print("memory['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_memory)
+    print()
+    print("reallocation['greedy'] =", greedy_reallocation)
+    print("reallocation['optimal basic'] =", optimal_basic_reallocation)
+    print("reallocation['ILP heuristic basic'] =", ILP_heuristic_basic_reallocation)
+    print("reallocation['optimal reallocation'] =", optimal_reallocation_reallocation)
+    print("reallocation['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_reallocation)
+    print('\n')
 
 
 def add_node_tpch():
+    print('Table 3')
     benchmark = TPCH()
     load_file = 'tpch/costs_edbt24.txt'
     benchmark.add_load(load_file)
@@ -676,6 +738,19 @@ def add_node_tpch():
                   f'\green{{{reallocation_ratio_realloc_greedy:7.1f}\%}}', '&\t',
                   f'{time_reallocation:7.1f} s',
                   '\\\\')
+    print('(a) TPC-H\n')
+
+    print('Figure 3 (a): plotted data for TPC-H')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal basic'] =", optimal_basic_memory)
+    print("memory['ILP heuristic basic'] =", ILP_heuristic_basic_memory)
+    print("memory['optimal reallocation'] =", optimal_reallocation_memory)
+    print()
+    print("reallocation['greedy'] =", greedy_reallocation)
+    print("reallocation['optimal basic'] =", optimal_basic_reallocation)
+    print("reallocation['ILP heuristic basic'] =", ILP_heuristic_basic_reallocation)
+    print("reallocation['optimal reallocation'] =", optimal_reallocation_reallocation)
+    print()
 
 
 def add_node_tpcds():
@@ -872,7 +947,6 @@ def add_node_tpcds():
             m = Munkres()
             matrix = hungarian_configuration(benchmark, allocation_old, min_realloc_time_limit)
             indexes = m.compute(matrix)
-            # print(indexes)
             for j in range(number_of_nodes):
                 node_id = indexes[j][1]
                 for query_id in min_realloc_time_limit[node_id]:
@@ -946,6 +1020,21 @@ def add_node_tpcds():
                   f'\\textsubscript{{T}}\green{{{reallocation_ratio_realloc_time_limit_greedy:7.1f}\%}}', '&\t',
                   f'\\textsubscript{{T}}{time_reallocation_time_limit:7.1f} s',
                   '\\\\')
+    print('(b) TPC-DS\n')
+
+    print('Figure 3 (b): plotted data for TPC-DS')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal basic'] =", optimal_basic_memory)
+    print("memory['ILP heuristic basic'] =", ILP_heuristic_basic_memory)
+    print("memory['optimal reallocation'] =", optimal_reallocation_memory)
+    print("memory['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_memory)
+    print()
+    print("reallocation['greedy'] =", greedy_reallocation)
+    print("reallocation['optimal basic'] =", optimal_basic_reallocation)
+    print("reallocation['ILP heuristic basic'] =", ILP_heuristic_basic_reallocation)
+    print("reallocation['optimal reallocation'] =", optimal_reallocation_reallocation)
+    print("reallocation['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_reallocation)
+    print()
 
 
 def add_node_accounting():
@@ -1157,19 +1246,32 @@ def add_node_accounting():
                   f'\\textsubscript{{C}}\green{{{reallocation_ratio_realloc_clustering_greedy:7.1f}\%}}', '&\t',
                   f'\\textsubscript{{C}}{time_reallocation_clustering:7.1f} s',
                   '\\\\')
+    print('(c) Accounting workload\n')
+
+    print('Figure 3 (c): plotted data for accounting workload')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal basic'] =", optimal_basic_memory)
+    print("memory['ILP heuristic basic'] =", ILP_heuristic_basic_memory)
+    print("memory['optimal reallocation'] =", optimal_reallocation_memory)
+    print("memory['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_memory)
+    print()
+    print("reallocation['greedy'] =", greedy_reallocation)
+    print("reallocation['optimal basic'] =", optimal_basic_reallocation)
+    print("reallocation['ILP heuristic basic'] =", ILP_heuristic_basic_reallocation)
+    print("reallocation['optimal reallocation'] =", optimal_reallocation_reallocation)
+    print("reallocation['ILP heuristic reallocation'] =", ILP_heuristic_reallocation_reallocation)
+    print('\n')
 
 
 def data_modifications_tpch():
+    print('Table 5')
     benchmark = TPCH()
     load_file = 'tpch/costs_edbt24.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
 
     columns_per_table = {}
-    # print(benchmark._tables)
     for table in benchmark._tables:
-        # print(table._name)
-        # print(table._columns)
         columns_per_table[table._name] = table._columns
 
     u1 = Query(1, columns_per_table['LINEITEM'])
@@ -1217,7 +1319,6 @@ def data_modifications_tpch():
 
     for number_of_nodes in range(2, 17):
         allocation_greedy = get_replica_configurations(benchmark, number_of_nodes, load_file, 'greedy')
-        # allocation_greedy = sigmod_greedy(benchmark, number_of_nodes)
         greedy_size = config_accessed_size(benchmark, allocation_greedy) / accessed_size
         greedy_modification_costs = config_data_modification_costs(benchmark, allocation_greedy) / number_of_nodes
 
@@ -1225,14 +1326,11 @@ def data_modifications_tpch():
                                         data_modifications=10)
         allocation_optimal = get_replica_configurations(benchmark, number_of_nodes, load_file, 'optimal',
                                                         data_modifications=10)
-        # for backend in allocation_optimal:
-        #     print(backend)
         optimal_size = config_accessed_size(benchmark, allocation_optimal) / accessed_size
         optimal_modification_costs = config_data_modification_costs(benchmark, allocation_optimal) / number_of_nodes
 
         memory_ratio_greedy = (optimal_size / greedy_size - 1) * 100
         modification_costs_ratio_greedy = (optimal_modification_costs / greedy_modification_costs - 1) * 100
-        # print(number_of_nodes, greedy_size, optimal_size, memory_ratio_greedy, float(greedy_modification_costs), float(optimal_modification_costs))
 
         print(f'{number_of_nodes:4}', '&\t',
               f'{greedy_size:7.3f}', '&\t',
@@ -1240,6 +1338,22 @@ def data_modifications_tpch():
               f'\green{{{memory_ratio_greedy:7.1f}\%}}', '&\t',
               f'\green{{{float(modification_costs_ratio_greedy):7.1f}\%}}', '&\t',
               f'{time_optimal:7.1f} s', '\\\\')
+
+        greedy_memory.append((number_of_nodes, greedy_size))
+        greedy_mod_costs.append((number_of_nodes, float(greedy_modification_costs)))
+
+        optimal_memory.append((number_of_nodes, optimal_size))
+        optimal_mod_costs.append((number_of_nodes, float(optimal_modification_costs)))
+
+    print('(a) TPC-H\n')
+
+    print('Figure 4 (a): plotted data for TPC-H\n')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['optimal'] =", optimal_memory)
+    print()
+    print("modification_costs['greedy'] =", greedy_mod_costs)
+    print("modification_costs['optimal'] =", optimal_mod_costs)
+    print()
 
 
 def data_modifications_tpcds():
@@ -1322,8 +1436,6 @@ def data_modifications_tpcds():
                                         data_modifications=10)
         allocation_optimal = get_replica_configurations(benchmark, number_of_nodes, load_file, 'optimal',
                                                         data_modifications=10)
-        # for backend in allocation_optimal:
-        #     print(backend)
         optimal_size = config_accessed_size(benchmark, allocation_optimal) / accessed_size
         optimal_modification_costs = config_data_modification_costs(benchmark, allocation_optimal) / number_of_nodes
 
@@ -1340,8 +1452,6 @@ def data_modifications_tpcds():
             allocation_optimal_time_limit = get_replica_configurations(benchmark, number_of_nodes, load_file,
                                                                        'time_limit',
                                                                        time_limit=10, data_modifications=10)
-            # for backend in allocation_optimal:
-            #     print(backend)
             optimal_time_limit_size = config_accessed_size(benchmark, allocation_optimal_time_limit) / accessed_size
             optimal_time_limit_modification_costs = config_data_modification_costs(benchmark,
                                                                                    allocation_optimal_time_limit) / number_of_nodes
@@ -1349,7 +1459,6 @@ def data_modifications_tpcds():
             memory_ratio_time_limit_greedy = (optimal_time_limit_size / greedy_size - 1) * 100
             modification_costs_ratio_time_limit_greedy = (
                                                                      optimal_time_limit_modification_costs / greedy_modification_costs - 1) * 100
-            # print(number_of_nodes, greedy_size, optimal_size, memory_ratio_greedy, float(greedy_modification_costs), float(optimal_modification_costs))
 
             heuristic_memory.append((number_of_nodes, optimal_time_limit_size))
             heuristic_mod_costs.append((number_of_nodes, float(optimal_time_limit_modification_costs)))
@@ -1368,48 +1477,43 @@ def data_modifications_tpcds():
                   f'\\textsubscript{{CT}}\green{{{memory_ratio_time_limit_greedy:7.1f}\%}}', '&\t',
                   f'\\textsubscript{{CT}}\green{{{float(modification_costs_ratio_time_limit_greedy):7.1f}\%}}', '&\t',
                   f'\\textsubscript{{CT}}{time_optimal_time_limit:7.1f} s', '\\\\')
+    print('(b) TPC-DS\n')
+
+    print('Figure 4 (b): plotted data for TPC-DS')
+    print("memory['greedy'] =", greedy_memory)
+    print("memory['ILP heuristic'] =", heuristic_memory)
+    print("memory['optimal'] =", optimal_memory)
+    print()
+    print("modification_costs['greedy'] =", greedy_mod_costs)
+    print("modification_costs['ILP heuristic'] =", heuristic_mod_costs)
+    print("modification_costs['optimal'] =", optimal_mod_costs)
 
 
-
-def reproduce_table_2():
-    print('Table 2')
-
+def reproduce_results_for_changing_workloads():
+    print('####### Reproduce results for changing workloads #######')
     changing_workload_tpch()
-    print('(a) TPC-H\n')
-
     changing_workload_tpcds()
-    print('(b) TPC-DS\n')
-
     changing_workload_accounting()
-    print('(c) Accounting workload\n')
 
 
-def reproduce_table_3():
-    print('Table 3')
-
+def reproduce_results_for_adding_a_node():
+    print('####### Reproduce results for adding a node #######')
     add_node_tpch()
-    print('(a) TPC-H\n')
-
     add_node_tpcds()
-    print('(b) TPC-DS\n')
-
     add_node_accounting()
-    print('(c) Accounting workload\n')
 
-def reproduce_table_5():
-    print('Table 5')
 
+def reproduce_results_for_data_modifications():
+    print('####### Reproduce results for data modifications #######')
     data_modifications_tpch()
-    print('(a) TPC-H\n')
-
     data_modifications_tpcds()
-    print('(b) TPC-DS\n')
 
 
 def main():
-    reproduce_table_2()
-    reproduce_table_3()
-    reproduce_table_5()
+    reproduce_results_for_changing_workloads()
+    reproduce_results_for_adding_a_node()
+    reproduce_results_for_data_modifications()
+
 
 if __name__ == '__main__':
     main()
