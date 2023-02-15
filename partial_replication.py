@@ -6,7 +6,9 @@ import math
 import os
 from fractions import Fraction
 
+from tpcds.stream_orders import tpcds_stream_orders
 from tpch.stream_orders import tpch_stream_orders
+from accounting.stream_orders import accounting_stream_orders
 
 
 class Column:
@@ -75,7 +77,8 @@ class Query:
     def __init__(self, nr, columns):
         self._nr = nr
         self._columns = columns
-        self._load = None
+        self._load = None       # load share
+        self._load_time = None  # processing time in micro seconds
 
     def __str__(self):
         return "Q%d" % self._nr
@@ -141,13 +144,11 @@ class TPCH:
     def add_load(self, load_file):
         with open(os.path.join(os.path.dirname(__file__), load_file)) as f:
             lines = f.read().split('\n')
-            i = 0
-            for line in lines:
-                self._queries[i]._load = int(round(float(line), 2) * 1000)
-                i += 1
-            sum_load = sum([q._load for q in self._queries])
+            for i, line in enumerate(lines):
+                self._queries[i]._load_time = int(float(line) * 1000 * 1000)
+            sum_load_time = sum([q._load_time for q in self._queries])
             for q in self._queries:
-                q._load = Fraction(q._load, sum_load)
+                q._load = Fraction(q._load_time, sum_load_time)
 
 
 def tpcds_parse_row_counts():
@@ -165,6 +166,151 @@ def tpcds_parse_row_counts():
                 #print(i, table_name)
                 sizes[table_name][scale_factors[i]] = int(row_count.replace(',', ''))
     return sizes
+
+
+class TPCDS:
+    SIZE = tpcds_parse_row_counts()
+    name = 'tpcds'
+    stream_orders = tpcds_stream_orders
+
+    def __init__(self, SF='1GB', schema_file='tpcds/schema.sql', query_files='tpcds/queries/%d.sql'):
+        self._SF = SF
+        self._tables = TPCDS.parse_tables(schema_file)
+        for t in self._tables:
+            t._benchmark = self
+        self._queries = TPCDS.parse_queries(self._tables, query_files)
+        self._updates = []
+
+    def row_count(self, table_name):
+        return self.SIZE[table_name][self._SF]
+
+    @staticmethod
+    def parse_tables(table_file):
+        with open(os.path.join(os.path.dirname(__file__), table_file)) as f:
+            table_definitions = f.read().split(';')
+
+        tables = []
+        column_identifier = 0
+        for table_def in table_definitions:
+            table_def_t = table_def.split('create table')
+            if len(table_def_t) != 2:
+                # print('No table def')
+                continue
+            # else
+            table_def = table_def_t[1]
+            lines = table_def.split('\n')
+            table_name = lines[0].strip()
+            #print(table_name)
+            if table_name == 'dbgen_version':
+                continue
+            table = Table(table_name)
+            for line in lines[1:]:
+                tokens = line.strip().split()
+                if len(tokens) < 2 or line.strip().startswith('primary key'):
+                    #print('No attribute def')
+                    continue
+                # else
+                attribute_name, attribute_type = tokens[0], tokens[1]
+                col = Column(column_identifier, attribute_name, Column.size_of_type(attribute_type), table)
+                column_identifier += 1
+                table._columns.append(col)
+                #print(attribute_name, attribute_type)
+            tables.append(table)
+        return tables
+
+    @staticmethod
+    def parse_queries(tables, query_files):
+        queries = []
+        for q_nr in range(1, 100):
+            with open(os.path.join(os.path.dirname(__file__), query_files % q_nr)) as f:
+                q_text = f.read().upper()
+            columns = []
+            for t in tables:
+                for c in t._columns:
+                    if c._name in q_text:
+                        columns.append(c)
+            queries.append(Query(q_nr, columns))
+        return queries
+
+    def add_load(self, load_file):
+        with open(os.path.join(os.path.dirname(__file__), load_file)) as f:
+            lines = f.read().split('\n')
+            for i, line in enumerate(lines):
+                self._queries[i]._load_time = int(float(line) * 1000 * 1000)
+            sum_load_time = sum([q._load_time for q in self._queries])
+            for q in self._queries:
+                q._load = Fraction(q._load_time, sum_load_time)
+
+
+class Accounting:
+    name = 'accounting'
+    stream_orders = accounting_stream_orders
+
+    def __init__(self, SF=1):
+        self._SF = SF
+        self._tables = Accounting.parse_tables('accounting/attributes_queried_sizes.txt')
+        for t in self._tables:
+            t._benchmark = self
+        self._queries = Accounting.parse_queries(self._tables)
+        self._updates = []
+
+    @staticmethod
+    def row_count(table_name):
+        if table_name == 'Accounting':
+            return 1000*1000
+        raise Exception('Unknown size of table: %s' % table_name)
+
+    @staticmethod
+    def parse_tables(table_file):
+        table = Table('Accounting')
+        with open(os.path.join(os.path.dirname(__file__), table_file)) as f:
+            column_identifier = 0
+            for line in f:
+                attribute_name, attribute_size = line.split()
+                col = Column(column_identifier, attribute_name, None, table)
+                col._size = int(attribute_size)
+                column_identifier += 1
+
+                table._columns.append(col)
+                #print(attribute_name, attribute_type)
+        return [table]
+
+    @staticmethod
+    def parse_queries(tables):
+        queries = []
+        q_id = 0
+        with open(os.path.join(os.path.dirname(__file__), 'accounting/queries.txt')) as f:
+            for line in f:
+                _, _, _, _, attribute_str = line.split()
+                columns = []
+                attributes = attribute_str.split(';')
+                number_of_attributes = len(attributes)
+                if '$rowid$' in attributes:
+                    number_of_attributes -= 1
+                for t in tables:
+                    for c in t._columns:
+                        if c._name in attributes:
+                            columns.append(c)
+                assert number_of_attributes == len(columns)
+                query = Query(q_id + 1, columns)
+                q_id += 1
+                queries.append(query)
+        return queries
+
+    def add_load(self, load_file):
+        with open(os.path.join(os.path.dirname(__file__), load_file)) as f:
+            lines = f.read().split('\n')
+            for i, line in enumerate(lines):
+                self._queries[i]._load_time = int(float(line))
+            sum_load_time = sum([q._load_time for q in self._queries])
+            for q in self._queries:
+                q._load = Fraction(q._load_time, sum_load_time)
+
+    def normalize_load(self):
+        sum_load = sum([q._load for q in self._queries])
+        for i, q in enumerate(self._queries):
+            # print(i+1, q._load)
+            q._load = Fraction(q._load, sum_load)
 
 
 def Benchmark_accessed_columns(benchmark):
@@ -206,13 +352,99 @@ def config_accessed_size(benchmark, config):
     for backend in config:
         # print(sorted(backend.keys()))
         backend_accessed_columns = Benchmark_accessed_columns_queries(benchmark, backend.keys())
+        for update in benchmark._updates:
+            if set(update._columns).intersection(backend_accessed_columns) != set():
+                backend_accessed_columns |= set(update._columns)
         backend_accessed_size = sum([c.size() for c in backend_accessed_columns])
         # print(backend_accessed_size)
         config_accessed_size += backend_accessed_size
     return config_accessed_size
 
 
+def config_data_modification_costs(benchmark, config):
+    data_modification_costs = 0
+    for backend in config:
+        # print(sorted(backend.keys()))
+        backend_accessed_columns = Benchmark_accessed_columns_queries(benchmark, backend.keys())
+        for update in benchmark._updates:
+            if set(update._columns).intersection(backend_accessed_columns) != set():
+                data_modification_costs += update._load
+    return data_modification_costs
+
+
+def get_runtime_ampl(benchmark, number_of_nodes, load_file, version='decomposition', robust=False,
+                         number_of_scenarios=None, clustered_queries=None, optimality_gap=None, time_limit=None,
+                         reallocation=None, data_modifications=None):
+    if benchmark.name in ['accounting', 'tpch', 'tpcds']:
+        folder = load_file.split('/')[-1].split('.')[0] + '/'
+    if version == 'decomposition':
+        folder += 'decomposition'
+    elif version == 'optimal':
+        folder += 'optimal'
+    elif version == 'partial_clustering':
+        assert clustered_queries is not None
+        folder += 'partial_clustering'
+    elif version == 'full_clustering':
+        assert clustered_queries is None
+        folder += 'full_clustering'
+    elif version == 'uncertain':
+        assert clustered_queries is not None
+        folder += f'uncertain/F{clustered_queries}'
+    elif version == 'two-step':
+        folder += 'two-step'
+    elif version == 'three-step':
+        folder += 'three-step'
+    elif version == 'optimality_gap':
+        assert optimality_gap is not None
+        folder += 'optimality_gap'
+    elif version == 'time_limit':
+        folder += 'time_limit'
+        assert time_limit is not None
+    else:
+        assert False, f'Unsupported version: {version}'
+    if robust:
+        folder += '/robust'
+    elif reallocation:
+        reallocation_goal, reallocation_approach = reallocation
+        assert reallocation_goal in ['min_realloc', 'no_realloc']
+        assert reallocation_approach in ['add_all', 'add_last', 'optimal']
+        folder += f'/reallocation/{reallocation_goal}/{reallocation_approach}'
+    elif data_modifications:
+        folder += '/data_modifications'
+    if version == 'uncertain':
+        search_string = f'{benchmark.name}/{folder}/sol_K{number_of_nodes}_*_S{number_of_scenarios}_*_out.txt'
+        file_names = glob.glob(os.path.join(os.path.dirname(__file__), search_string))
+    else:
+        if robust:
+            suffix = '_robust'
+        elif reallocation:
+            suffix = '_reallocation'
+        else:
+            suffix = ''
+
+        if version == 'optimality_gap':
+            suffix += f'_gap{optimality_gap}'
+        elif version == 'time_limit':
+            suffix += f'_time{time_limit}'
+
+        search_string = f'{benchmark.name}/{folder}/sol_K{number_of_nodes}_*_out{suffix}.txt'
+        file_names = glob.glob(os.path.join(os.path.dirname(__file__), search_string))
+    assert len(file_names) == 1, f'Files: {file_names} for: {benchmark.name}, version={version}, robust={robust}, {number_of_nodes}\n{search_string}'
+
+    with open(file_names[0]) as f:
+        file_txt = f.read()
+        lines = file_txt.split('\n')
+        if version == 'uncertain':
+            summary_line = lines[2]
+        else:
+            summary_line = lines[0]
+        runtime = float(summary_line.split(':')[1])
+
+    return runtime
+
+
 def sigmod_greedy(benchmark, num_backends, load=None):
+    assert num_backends > 0, f'Number of nodes (= {num_backends}) must be positive'
     def updates_for_query(query):
         updates = []
         for update in benchmark._updates:
@@ -226,10 +458,10 @@ def sigmod_greedy(benchmark, num_backends, load=None):
     query_sizes = []
 
     # Normalize query load
-    sum_of_query_load = sum(query._load for query in benchmark._queries)
+    sum_of_query_load = sum(query._load for query in benchmark._queries + benchmark._updates)
     assert type(sum_of_query_load) == Fraction
 
-    for query in benchmark._queries:
+    for query in benchmark._queries + benchmark._updates:
         query_weights.append(query._load / sum_of_query_load)
         query_sizes.append(sum([column.size() for column in query._columns]))
     # print(query_sizes)
@@ -276,7 +508,7 @@ def sigmod_greedy(benchmark, num_backends, load=None):
 
         def all_backends_full():
             for i in range(num_backends):
-                if current_load < scaled_load:
+                if current_load[i] < scaled_load[i]:
                     return False
             return True
 
