@@ -9,7 +9,7 @@ from setup_benchmark import get_replica_configurations, hungarian_configuration
 def changing_workload_tpch():
     print('Table 2')
     benchmark = TPCH()
-    load_file = 'tpch/costs_edbt24.txt'
+    load_file = 'tpch/costs_dbx.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
     access_all_config = get_replica_configurations(benchmark, 1, load_file, 'greedy')
@@ -17,12 +17,12 @@ def changing_workload_tpch():
     allocation_base = get_replica_configurations(benchmark, 1, load_file, 'greedy')
 
     workload_old = TPCH()
-    workload_old_load_file = 'tpch/costs_edbt24_low.txt'
+    workload_old_load_file = 'tpch/costs_dbx_low.txt'
     workload_old.add_load(workload_old_load_file)
     set_column_sizes(workload_old._tables, workload_old_load_file)
 
     workload_new = TPCH()
-    workload_new_load_file = 'tpch/costs_edbt24_high.txt'
+    workload_new_load_file = 'tpch/costs_dbx_high.txt'
     workload_new.add_load(workload_new_load_file)
     set_column_sizes(workload_new._tables, workload_new_load_file)
 
@@ -136,7 +136,7 @@ def changing_workload_tpch():
 
 def changing_workload_tpcds():
     benchmark = TPCDS()
-    load_file = 'tpcds/costs_edbt24.txt'
+    load_file = 'tpcds/costs_dbx.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
     access_all_config = get_replica_configurations(benchmark, 1, load_file, 'greedy')
@@ -144,12 +144,12 @@ def changing_workload_tpcds():
     allocation_base = get_replica_configurations(benchmark, 1, load_file, 'greedy')
 
     workload_old = TPCDS()
-    workload_old_load_file = 'tpcds/costs_edbt24_low.txt'
+    workload_old_load_file = 'tpcds/costs_dbx_low.txt'
     workload_old.add_load(workload_old_load_file)
     set_column_sizes(workload_old._tables, workload_old_load_file)
 
     workload_new = TPCDS()
-    workload_new_load_file = 'tpcds/costs_edbt24_high.txt'
+    workload_new_load_file = 'tpcds/costs_dbx_high.txt'
     workload_new.add_load(workload_new_load_file)
     set_column_sizes(workload_new._tables, workload_new_load_file)
 
@@ -573,9 +573,9 @@ def changing_workload_accounting():
 
 
 def add_node_tpch():
-    print('Table 3')
+    print('Table 4')
     benchmark = TPCH()
-    load_file = 'tpch/costs_edbt24.txt'
+    load_file = 'tpch/costs_dbx.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
     access_all_config = get_replica_configurations(benchmark, 1, load_file, 'greedy')
@@ -755,7 +755,7 @@ def add_node_tpch():
 
 def add_node_tpcds():
     benchmark = TPCDS()
-    load_file = 'tpcds/costs_edbt24.txt'
+    load_file = 'tpcds/costs_dbx.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
     access_all_config = get_replica_configurations(benchmark, 1, load_file, 'greedy')
@@ -1264,9 +1264,9 @@ def add_node_accounting():
 
 
 def data_modifications_tpch():
-    print('Table 5')
+    print('Table 7')
     benchmark = TPCH()
-    load_file = 'tpch/costs_edbt24.txt'
+    load_file = 'tpch/costs_dbx.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
 
@@ -1358,7 +1358,7 @@ def data_modifications_tpch():
 
 def data_modifications_tpcds():
     benchmark = TPCDS()
-    load_file = 'tpcds/costs_edbt24.txt'
+    load_file = 'tpcds/costs_dbx.txt'
     benchmark.add_load(load_file)
     set_column_sizes(benchmark._tables, load_file)
 

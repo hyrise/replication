@@ -12,12 +12,15 @@ For the real-world workload, we have anonymized metadata, which allows to direct
 For TPC-H and TPC-DS, we obtain model inputs in the following way
 
 ### Fragment Sizes
-Fragment/column sizes are modeled by using the PostgreSQL function pg_column_size().
+Fragment/column sizes are derived from the database catalog.
+For PostgreSQL, we use the function pg_column_size().
 In case there is a single column index on an attribute, i.e., the attribute is part of a primary key, the according fragment size is increased by the index size. We use the command pg_table_size(index name) to calculate index sizes.
+Fragment sizes depend, for example, on the scale factor, encoding scheme, and used database system.
+Hence, there may be multiple versions for the same workload in the repository.
 
 ### Query Costs
-We modeled query costs as average processing time for a query in PostgreSQL with random template parameters.
-Query costs depend, for example, on the hardware and PostgreSQL version.
+We modeled query costs as average processing time for a query with random template parameters.
+Query costs depend, for example, on the hardware and used database system.
 Hence, there may be multiple versions for the same workload in the repository.
 
 ## TPC-H
@@ -34,8 +37,8 @@ The TPC-DS benchmark consists of 99 queries.
 80 of 99 TPC-DS queries could be executed.
 [TPC-DS execution costs](https://github.com/hyrise/replication/blob/master/tpcds/tpcds_load_postgres_index_single.txt) (A '0' indicates a timeout, i.e., the omission of the query).
 
-## TPC-DS for EDBT
-[TPC-DS model input](https://github.com/hyrise/replication/blob/master/tpcds_edbt/tpcds_20200811_ampl_input.txt)
+## TPC-DS for EDBT 2021
+[TPC-DS model input](https://github.com/hyrise/replication/blob/master/tpcds_edbt/tpcds_2021edbt_ampl_input.txt)
 
 The TPC-DS benchmark consists of 99 queries.
 94 of 99 TPC-H queries could be executed without a timeout (120 s).
@@ -46,6 +49,14 @@ Anonymized [model input](https://github.com/hyrise/replication/blob/master/real_
 * query costs c_j, j=1,...4461
 * query frequencies f_j, j=1,...4461
 * accessed fragments per query q_j, j=1,...4461
+
+
+# Reproducibility of Paper Results
+
+## Fragment Allocations for Partially Replicated Databases Considering Data Modifications and Changing Workloads
+
+Run `python reproduce_modification_reallocation.py` to generate the content of latex tables and the figures' plotted data.
+
 
 # Dynamic Query-Based Load-Balancing
 
