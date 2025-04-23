@@ -334,7 +334,7 @@ def main(stdscr):
     # file_name = 'results_1571561461.csv'
     # connection = create_result_table(file_name, 'example17.db')
     connection = open_result_table('example17.db')
-    visualize_queues_curses(stdscr, connection, 'rabl', 5, failure_node_id=0)
+    visualize_queues_curses(stdscr, connection, 'greedy', 5, failure_node_id=0)
 
 
 if __name__ == '__main__':
